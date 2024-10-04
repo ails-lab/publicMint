@@ -282,6 +282,7 @@ public class AccessAuthenticationLogic {
 			if( u.sharesProject(enrichment)) sharesProject=true;
 		} else if( item instanceof Translation ) {
 			Translation tl = (Translation) item;
+			org = tl.getOrganization();
 			if( tl.getCreator().getDbID() == u.getDbID()) created = true;
 			if( ! Project.sharedIds( u.getProjectIds(), tl.getProjectIds()).isEmpty()) sharesProject=true;
 		}

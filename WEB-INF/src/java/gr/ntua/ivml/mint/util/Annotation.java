@@ -2,12 +2,12 @@ package gr.ntua.ivml.mint.util;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -35,10 +35,6 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import gr.ntua.ivml.mint.concurrent.Queues;
 import gr.ntua.ivml.mint.db.DB;
 import gr.ntua.ivml.mint.persistent.Enrichment;
-import io.restassured.RestAssured;
-import io.restassured.config.HttpClientConfig;
-import io.restassured.config.RestAssuredConfig;
-import io.restassured.response.Response;
 
 public class Annotation {
 	private static final Logger log = Logger.getLogger( Annotation.class );
@@ -489,6 +485,15 @@ public class Annotation {
 		return null;
 	}
 	
+	public static <T> T getDefault( Supplier<T>... suppliers ) {
+		if( suppliers == null ) return null;
+		for( Supplier<T> s: suppliers ) {
+			T t = s.get();
+			if( t != null ) return t; 
+		}
+		return null;
+	}
+	
 	public static ObjectNode getEdmContext() {
 		try {
 			ObjectNode template = (ObjectNode) Jackson.om().readTree( Annotation.class.getClassLoader().getResourceAsStream("/gr/ntua/ivml/mint/util/annotation_template.json" ));
@@ -549,9 +554,9 @@ public class Annotation {
 			if(( enrichment.getName() == null) && (fetch.name != null ) )
 				enrichment.setName( fetch.name );
 			
-			ObjectNode res =  (ObjectNode) getDefault( testParseTgz( fetch.data ),
-					testParseGz( fetch.data ),
-					testParseText( fetch.data ) ,null );
+			ObjectNode res =  getDefault(()-> testParseTgz( fetch.data ),
+					()->testParseGz( fetch.data ),
+					()->testParseText( fetch.data ) ,()->null );
 			if( res == null ) {
 				enrichment.updateStatus( "ERROR", "parsing of retrieved Link failed");
 				return;

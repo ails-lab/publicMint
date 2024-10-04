@@ -86,6 +86,7 @@ String orgName = (String) request.getParameter( "orgName");
 			<span class="selector-text" style="width:150px;display:inline-block"><b>Organization : </b></span>
 			<span id="orgName" class="selector-text"><s:property value="organizations.get(0).englishName" /></span>
 			<input type="hidden" id="filterorg" value="<s:property value="organizations.get(0).dbID"/>" />
+			<div id="filterorg_chosen" style="display:none;"><span><s:property value="organizations.get(0).englishName" /></span></div>
 		</div>
 	</s:else>
 		

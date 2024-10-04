@@ -41,6 +41,7 @@ public class PangeanicApi {
     private static String languageDetectionUrl = Config.get( "translation.detect.url" ); 
     private static String apiKey = Config.get( "translation.apikey" );
     private static Optional<HttpHost> proxy;
+    private static int TIMEOUT = 60*1000; // 1 min in millies
     
     // POJOs for parsing endpoint responses
     private static class LanguageDetectSingleResponse {
@@ -183,19 +184,20 @@ public class PangeanicApi {
         ((ObjectNode) requestBody).put("src_lang", value.get(0).getUsedLanguage());
         ((ObjectNode) requestBody).put("include_src", true);
         ((ObjectNode) requestBody).put("tgt_lang", "en");
-        log.info( "Translate Request " + requestBody.toString());
+        log.debug( "Translate Request " + requestBody.toString());
+        long startTime = System.currentTimeMillis();
         String response = null;
         try {
         	Request r = Request.Post(translationUrl);
         	getProxy().ifPresent( h-> r.viaProxy(h));
 	        response = r.bodyString(requestBody.toString(), ContentType.APPLICATION_JSON)
-	                .socketTimeout(5000)
-                    .connectTimeout(5000)
+	                .socketTimeout(TIMEOUT)
+                    .connectTimeout(TIMEOUT)
 	                .execute()
 	                .returnContent()
 	                .toString();
 	        
-	        log.info( "Translate Response " + response );
+	        log.debug( "Translate Response " + response );
 	        TranslationResponse res = om.readValue(response, TranslationResponse.class);
 	        Iterator<TranslationSingleResponse> itTrans = res.translations.iterator();
 	        Iterator<TranslationLiteral> itRes = value.iterator();
@@ -214,6 +216,7 @@ public class PangeanicApi {
         	log.error( "",  e );
         	log.error( "Request: \n" + requestBody.toString()+"\n\n");
         	log.error( "Response: \n" + response + "\n\n");
+        	log.error( "After " + (( System.currentTimeMillis() - startTime) / 1000) + " secs");
         	throw e;
         }
 
@@ -235,8 +238,8 @@ public class PangeanicApi {
         getProxy().ifPresent( h-> r.viaProxy(h));
         
         String response = r.bodyString(requestBody.toString(), ContentType.APPLICATION_JSON)
-                            .socketTimeout(5000)
-                            .connectTimeout(5000)
+                            .socketTimeout(TIMEOUT)
+                            .connectTimeout(TIMEOUT)
                             .execute()
                             .returnContent()
                             .toString();
