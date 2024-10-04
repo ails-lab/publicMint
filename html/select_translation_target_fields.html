@@ -1,0 +1,23 @@
+<script>
+  getValueAndStoreToSessionStorage("uploadId", "select_translation_target_fields");
+  new Vue({
+    el: "#select-translation-target-fields-page",
+    data() {
+      return {
+        uploadId: null,
+      };
+    },
+    created: async function () {
+      this.uploadId = sessionStorage.getItem("uploadId");
+    },
+  });
+</script>
+
+<div class="panel-body">
+  <div id="select-translation-target-fields-page" class="ui-widget block-nav">
+    <statistics-component
+      v-bind:translation-flow="true"
+      v-bind:upload-id="uploadId"
+    />
+  </div>
+</div>

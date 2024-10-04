@@ -1,0 +1,21 @@
+<script>
+  getValueAndStoreToSessionStorage('uploadId', 'statistics');
+  new Vue({
+    el: '#statistics-page',
+    data() {
+      return {
+        uploadId: null,
+      };
+    },
+    created: async function () {
+      this.uploadId = sessionStorage.getItem("uploadId");
+    },
+  });
+</script>
+
+<div class="panel-body">
+
+  <div id="statistics-page" class="ui-widget block-nav">
+    <statistics-component v-bind:translation-flow="false"  v-bind:upload-id="uploadId"/>
+  </div>
+</div>

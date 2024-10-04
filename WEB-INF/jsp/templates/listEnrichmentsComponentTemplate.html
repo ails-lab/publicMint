@@ -1,0 +1,133 @@
+<script type="text/x-template" id="list-enrichments-component">
+
+<div class="panel-body ui-widget block-nav" style="cursor:default">
+  <div v-if="enrichments.length > 0">
+    <div class="summary">
+      <div v-if="!isSelection" class="label">Annotations view for '{{orgName}}'</div>
+      <div v-else class="label">Select Annotation to apply from '{{orgName}}'</div>
+    </div>  
+    <div v-for="a in enrichments" class="listbox" :class=
+	 "{errorBackground:isError(a)||(isSelection&&isRunning(a)), 
+	  runningBackground:(!isSelection&&isRunning(a)),
+	  selectedBackground:(selectedEnrichment!= null) && (a.dbID == selectedEnrichment.dbID)}">
+      <div >
+	<div class="name" :class="isSelection && 'clickme'" @click="openFilters(a)" > {{ a.name }}</div>
+	<div > {{ a.format }}</div>
+      </div>
+      <div >
+	<div class="infoDate" :title="a.creationTime"> {{ a.prettyTime }} </div>
+	<div :title="'#'+a.dbID" >{{ a.recordCount}} records</div>
+	<div v-if="isOk( a ) && !isSelection">
+	  <img  class="clickme" @click="deleteEnrichment(a, true )" title="Delete" src="images/buttons/delete_hover.png" />
+	  <img  v-if="a.stats !== undefined"class="clickme" @click="viewStats(a)" title="View Stats" src="images/stats2.png" />
+	  <img  class="clickme" @click="viewValues(a)" title="View Values" src="images/oaiurl.png" />
+	  <img  class="clickme" @click="shareClicked(a.share,$event)" title="Copy Share link to Clipboard" src="images/shared.png" />
+	</div>
+	<div v-if="isOk( a ) && isSelection">
+	  <img  class="clickme" @click="viewStats(a)" title="View Stats" src="images/stats2.png" />
+	  <img  class="clickme" @click="viewValues(a)" title="View Values" src="images/oaiurl.png" />
+	</div>
+	<div v-if="isRunning( a ) && !isSelection">
+	  <img  class="clickme" @click="info(a,$event)" title="Info" src="images/buttons/loading.gif" />
+	</div>			            			
+	<div v-if="isError( a ) && !isSelection">
+	  <img  class="clickme" @click="info(a,$event)" title="Info" src="images/buttons/info.png" />
+	  <img  class="clickme" @click="deleteEnrichment(a, false )" title="Delete" src="images/problem.png" />
+	</div>			            			
+      </div>   
+    </div>
+    <div class="paging" v-if="pagingNeeded()"> 
+      <div class="clickme" v-if="canPageBack()">
+	<span @click="pageBack()">&lt;</span>
+      </div> 
+      {{ this.start+1 }} - {{this.start+this.enrichments.length}} 
+      <div class="clickme" v-if="canPageForward()">
+	<span @click="pageForward()">&gt;</span>
+      </div>
+    </div>
+    <enrichment-values-component v-if="viewer == 'Values'" :max-row-count="selectedEnrichment.recordCount"
+				 :enrichment-id="selectedEnrichment.dbID" @close-details="viewer=null"> </enrichment-values-component>
+    <annotation-filter-component v-show="viewer == 'Filters'" :dataset-id="datasetId" :enrichment="selectedEnrichment" ></annotation-filter-component>
+    <enrichment-stats-component v-if="viewer =='Stats'" :enrichment="selectedEnrichment" @close-view="viewer=null"> </enrichment-stats-component>
+  </div>
+  
+  <div v-if="enrichments.length == 0 ">
+    <div class="summary">	
+      <div class="label">There are no annotations in this Organization</div>
+    </div>  
+  </div>
+</div>
+</script>
+
+<style>
+
+  .clickme {
+      cursor:pointer;
+  }
+
+  .listbox.errorBackground {
+      background-image:linear-gradient( #fff6f0, #fff0e6);
+  }
+
+  .listbox.runningBackground {
+      background-image:linear-gradient( #f6fff6, #e6ffe6);
+  }
+  .listbox.selectedBackground {
+      background-image:linear-gradient( #eeeeee, #e2e2e2);
+  }
+
+  .listbox {
+      display:flex;
+      flex-direction:column;
+      background-image:linear-gradient( #fefefe, #f2f2f2);
+  }
+
+  .listbox > div:first-child {
+      display:flex;
+      flex-direction:row;
+      padding-top:5px;
+      justify-content:space-between;
+      font-size:1.1em;
+      height: 16px;
+      margin-left: 10px;
+  }
+
+  .listbox > div:nth-child( 2 ) {
+      padding:5px;
+      
+      display:flex;
+      margin-left:20px;
+      justify-content:space-between;
+      align-items:center;
+  }
+
+  .listbox .name {
+      font-weight: bold;	
+  }
+
+  .listbox .infoDate {
+      font-style:italic;
+  }
+
+  .listbox img {
+      height: 16px;
+      padding-left:2px;
+  }
+
+  .paging {
+      font-size:1.5em;
+      display:flex;
+      width:33%;
+      justify-content:space-around;
+      cursor:default;
+  }
+  .paging .clickme {
+      text-decoration: underline;
+  }
+
+  .header {
+      height:2em;
+      font-weight:bold;
+  }
+
+</style>

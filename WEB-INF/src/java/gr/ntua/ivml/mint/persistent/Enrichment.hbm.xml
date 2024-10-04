@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <class name="gr.ntua.ivml.mint.persistent.Enrichment" table="enrichment">
+        <id name="dbID" column="enrichment_id">
+            <generator class="sequence">
+                <param name="sequence">seq_enrichment_id</param>
+            </generator>
+        </id>
+        <property name="name" column="name" />
+        <property name="headers" column="headers" />
+        <many-to-one name="creator" column="creator_id" not-null="false"/>
+        <many-to-one name="organization" column="organization_id" not-null="false"/>
+        <property name="bytesize" column="byte_size"/>
+        <property name="recordCount" column="record_count"/>
+        <property name="projectIds" column="project_ids" type="gr.ntua.ivml.mint.persistent.ShortArrayType"/>
+        <property name="content" column="content" lazy="true"/>
+        <property name="jsonStats" column="json_stats"/>
+        <property name="creationDate" column="creation_date" />
+        <property name="format" column="format">
+            <type name="org.hibernate.type.EnumType">
+                <param name="enumClass">gr.ntua.ivml.mint.persistent.Enrichment$Format</param>
+                <param name="useNamed">true</param>
+            </type>
+        </property>
+
+    </class>
+</hibernate-mapping>

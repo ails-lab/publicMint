@@ -1,0 +1,43 @@
+<script type="text/x-template" id="statistics-component">
+  <div v-if="!normalizationMode">
+    <div class="summary">
+      <div class="label">
+        {{ dataset_details.name}} {{ !translationFlow ? 'Statistics' : 'Translate' }}
+      </div>
+      <div class="info">
+        <template v-if="translationFlow">
+          Select the target fields that will be translated
+          <br></br>
+        </template>
+      </div>
+      <button v-if="translationFlow" class="continue-translate-button" @click="continueToNormalization()">Continue</button>
+    </div>
+    <table v-if="!loading" class="mb-40">
+      <thead>
+        <tr class="slick-header">
+          <th class="slick-header-column ui-state-default-vue">Xpath</th>
+          <th class="slick-header-column ui-state-default-vue">Count</th>
+          <th class="slick-header-column ui-state-default-vue">Distinct</th>
+          <th class="slick-header-column ui-state-default-vue">Length</th>
+        </tr>
+      </thead>
+      <tbody v-for="(cell, index) in dataset_statistics" :key="index">
+        <tr v-if="cell.parent==='' || dataset_statistics[cell.parent].expanded">
+          <td class="slick-cell-vue cell-title" :style="cellPaddingLeft(cell.indent)">
+            <span class="toggle mr-3 cursor-pointer" :class="cell.expanded ? 'collapse' : 'expand'"
+              v-if="cell.hasChildren" @click="toggleClicked(cell, !cell.expanded)">
+            </span>
+            <span class="cursor-pointer" :class="noItemsCondition(cell) ? 'load-un' : ''"
+              @click="openStatisticInfo(cell, $event)">{{ cell.xpath }}
+            </span>
+          </td>
+          <td class="slick-cell-vue">{{ cell.count }}</td>
+          <td class="slick-cell-vue">{{ cell.distinct }}</td>
+          <td class="slick-cell-vue">{{ cell.length }}</td>
+          <td v-if="translationFlow" class="slick-cell-vue"><input v-if="cell.length.length && !cell.xpath.startsWith('@')" type="checkbox" v-model="cell.toBeTranslated"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <translate-normalization-component v-else :fields="dataset_statistics" :selected-fields="selectedTranslationTargetFields" :dataset_details="dataset_details" @back-to-selection="changeNormalizationMode()" />
+</script>

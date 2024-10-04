@@ -1,0 +1,64 @@
+<script type="text/x-template" id="translate-normalization-component">
+  <div class="translate-normalization-component">
+    <div class="summary">
+      <button class="back-button" @click="$emit('back-to-selection')">Back to target field selection</button>
+      <div class="label">
+        {{ dataset_details.name }} Translate Normalization
+      </div>
+      <div class="translation-input-form">
+        <p>
+          Choose normalization process.
+        </p>
+        <div class="input-group">
+          <input type="radio" id="default" value="default" v-model="translationMethod" @change="translationMethodChanged()">
+          <label for="default">Set default source language to translate from</label>
+        </div>
+        <div class="input-group">
+          <input type="radio" id="norm" value="norm" v-model="translationMethod" @change="translationMethodChanged()">
+          <label for="norm">Normalise source language(s) based on metadata language tags</label>
+        </div>
+      </div>
+    </div>
+    <div class="default-lang-section" v-if="translationMethod=='default'">
+      <label for="langs">Pick a language to translate from.This means that the machine translation engines will translate assuming your selection as the source language, independently of what the language tags in the metadata indicate.</label>
+      <select v-model="selectedDefaultLang" id="langs">
+        <option disabled selected value>Select an option</option>
+        <option v-for="lang of langs" :key="lang.code" :value="lang.code">{{ lang.label }}</option>
+      </select>
+      <div class="button-section">
+        <p class="errors" :class="{'visibility-hidden': !error.length}">{{ error }}</p>
+        <button @click="submitDefaultLang()" class="translate-button">Translate</button>
+      </div>
+    </div>
+    <div class="language-tags-section" v-else-if="translationMethod=='norm' && !loading">
+      <p>For each language tag that appears in the metadata, select a normalized language from the dropdown in order to avoid misspelled or unsupported language tags. If you do not want to translate a language, choose the 'Do not translate' option. You can also apply language detection to the terms that contain those tags, but bear in mind that this will result to additional time for the translation process.</p>
+      <div class="language-tags-grid">
+        <div class="language-tag header">
+          <h4>Language tag</h4>
+          <h4>Normalized language</h4>
+          <h4>Apply detection</h4>
+        </div>
+        <div class="language-tag" v-for="(lang, index) of languageTagObjects" :key="lang.label">
+          <h4>{{ lang.label }}</h4>
+          <select v-model="lang.normalizedLabel" :id="'langs-'+index">
+            <option disabled selected value>Select an option</option>
+            <option value="no-translation">Do not translate</option>
+            <option v-for="language of langs" :key="language.code" :value="language.code">{{ language.label }}</option>
+          </select>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" :value="lang.applyDetection" :id="'apply-detection-'+index" @change="applyDetectionChanged(index)">
+            <label class="form-check-label" :for="'apply-detection-'+index">
+              Apply detection
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="button-section">
+        <p class="errors" :class="{'visibility-hidden': !error.length}">{{ error }}</p>
+        <button @click="submitTags()" class="translate-button">Translate</button>
+      </div>
+    </div>
+    <div>
+    </div>
+  </div>
+</script>

@@ -1,0 +1,24 @@
+<script>
+
+	new Vue({
+		el: "#wrapTranslation",
+		data: {
+			datasetId:null,
+			orgId:null
+		},
+		// if there is a dataset id, than this is for picking and applying an erichment
+	    created: async function () {
+    	},
+    	mounted: function() {
+			this.datasetId=panelUrlParam( this.$el, "datasetId" ) 
+			this.orgId = panelUrlParam( this.$el, "orgId")
+    	},
+    	methods: {
+	    },
+  	});
+  
+ </script>
+
+<div id="wrapTranslation">
+	<list-translations-component v-if="orgId || datasetId" :org-id="orgId" :dataset-id="datasetId" />
+</div>

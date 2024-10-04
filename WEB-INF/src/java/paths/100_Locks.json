@@ -1,0 +1,86 @@
+{
+	"/locks": {
+		"delete": {
+			"tags": [
+				"Lock"
+			],
+			"security": [
+				{
+					"SessionCookie": []
+				}
+			],
+			"summary": "Remove given Lock",
+			"parameters": [
+				{
+					"name": "lockId",
+					"in": "query",
+					"description": "Id of the lock you whish to remove",
+					"required": true,
+					"schema": {
+						"type": "integer"
+					}
+				}
+			],
+			"operationId": "LockHandler/deleteLock()",
+			"responses": {
+				"200": {
+					"description": "Successful operation"
+				},
+				"400": {
+					"$ref": "#/components/responses/error"
+				}
+			}
+		},
+		"get": {
+			"tags": [
+				"Lock"
+			],
+			"summary": "Get Locks",
+			"security": [
+				{
+					"SessionCookie": []
+				}
+			],
+			"description": "Returns locks of logged in user or all Locks if you are the Superuser",
+			"operationId": "LockHandler/getLocks()",
+			"responses": {
+				"200": {
+					"description": "Successful operation",
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"id": {
+											"type": "integer",
+											"description": "Numerical Lock id"
+										},
+										"name": {
+											"type": "string",
+											"description":"A descriptive name for the Lock"
+										},
+										"login": {
+											"type": "string",
+											"description":"User login of lock owner. For regular users this is yourself"
+											
+										},
+										"timestamp": {
+											"type": "string",
+											"description":"The timestamp in some standard format."
+										},
+										"prettyTime": {
+											"type": "string",
+											"description":"A human readable time like \"5 min ago\""
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,41 @@
+{
+	"/login": {
+		"post": {
+			"tags": [
+				"User"
+			],
+			"security": [
+				{
+				}
+			],
+			"summary": "Login to system, obtain authorized Session cookie.",
+			"parameters": [
+				{
+					"name": "username",
+					"in": "query",
+					"required": true,
+					"schema": {
+						"type": "string"
+					}
+				},
+				{
+					"name": "password",
+					"in": "query",
+					"required": true,
+					"schema": {
+						"type": "string"
+					}
+				}
+			],
+			"operationId": "RequestHandler/loginPost()",
+			"responses": {
+				"200": {
+					"description": "Successful operation. Set-Cookie header comes back."
+				},
+				"400": {
+					"$ref": "#/components/responses/error"
+				}
+			}
+		}
+	}
+}

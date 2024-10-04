@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+   <class name="gr.ntua.ivml.mint.persistent.Translation" table="translation">
+	    <id name="dbID" column="translation_id">
+		    <generator class="sequence">
+		    	<param name="sequence">seq_translation_id</param>
+		    </generator>
+	    </id>
+	    
+		<many-to-one name="organization" 
+        column="organization_id"
+        not-null="true"/>
+
+		<many-to-one name="creator" 
+        column="creator_id"
+        not-null="true"/>
+
+	    <property name="projectIds" column="project_ids" type="gr.ntua.ivml.mint.persistent.ShortArrayType" />
+
+		<many-to-one name="dataset" 
+        column="dataset_id"
+        not-null="false"/>
+        
+		<many-to-one name="originalDataset" 
+        column="original_dataset_id"
+        not-null="false"/>
+
+	    <property name="startDate" column="start_date" />
+	    <property name="endDate" column="end_date" />
+	    <property name="status" />
+	    
+		
+	    <property name="jsonConfig" column="json_config"/>
+	    <property name="jsonStats" column="json_stats"/>
+	    
+   </class>
+
+</hibernate-mapping>

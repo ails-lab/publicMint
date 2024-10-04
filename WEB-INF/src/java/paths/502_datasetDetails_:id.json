@@ -1,0 +1,42 @@
+{
+	"/datasetDetails/{datasetId}": {
+		"get": {
+			"tags": [
+				"Dataset"
+			],
+			"security": [
+				{
+					"SessionCookie": []
+				}
+			],
+			"summary": "Get details about given dataset",
+			"parameters": [
+				{
+					"name": "datasetId",
+					"in": "path",
+					"description": "Id of the dataset",
+					"required": true,
+					"schema": {
+						"type": "integer"
+					}
+				}
+			],
+			"operationId": "RequestHandler/datasetDetailsGet()",
+			"responses": {
+				"200": {
+					"description": "Successful operation",
+					"content" : {
+						"application/json" : {
+							"schema": {
+								"description": "A json object with various info on the dataset. The fields are intended for the UI!"	
+							}
+						}
+					}
+				},
+				"400": {
+					"$ref": "#/components/responses/error"
+				}
+			}
+		}
+	}
+}

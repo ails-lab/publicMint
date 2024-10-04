@@ -1,0 +1,75 @@
+{
+	"/listOrganizations": {
+		"get": {
+			"tags": [
+				"Organization"
+			],
+			"security": [
+				{
+				}
+			],
+			"summary": "Short summary of all the Organizations in the system",
+			"parameters": [
+				
+			],
+			"operationId": "RequestHandler/listOrganizationsGet()",
+			"responses": {
+				"200": {
+					"description": "Successful operation",
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"id": {
+											"type": "integer",
+											"description": "Numerical Organization id"
+										},
+										"name": {
+											"type": "string",
+											"description":"The english name of the Organization"
+										},
+										"address": {
+											"type": "string"
+										},
+										"country": {
+											"type": "string"
+										},
+										"description": {
+											"type": "string"
+										},
+										"contact": {
+											"type": "string",
+											"description":"The name of a person"
+										},
+										"contactEmail":{
+											"type": "string"
+										},
+										"contactPhone":{
+											"type": "string"
+										}
+									},
+									"example": {
+										"id": 1012,
+										"name": "Austrian Broadcasting Corporation",
+										"address": "Würzburggasse 30, 1130 Vienna",
+										"country": "Austria",
+										"description": "",
+										"contact": "Michael Vielhaber",
+										"contactEmail": "michael.vielhaber@orf.at",
+										"contactPhone": ""
+									}
+								}
+							}
+						}
+					}
+				},
+				"400": {
+					"$ref": "#/components/responses/error"
+				}
+			}
+		}
+	}
+}

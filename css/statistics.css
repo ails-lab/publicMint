@@ -1,0 +1,171 @@
+.slick-cell-vue {
+  border-right: 1px dotted silver;
+  border-bottom: 1px solid silver;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  padding: 5px;
+  margin: 0;
+  white-space: nowrap;
+  cursor: default;
+  color: #4f4f4f;
+}
+
+.ui-state-default-vue {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 16px;
+  line-height: 16px;
+  margin: 0;
+  padding: 4px;
+  border-right: 1px solid silver;
+  border-left: 0px;
+  border-top: 0px;
+  border-bottom: 0px;
+  text-align: left;
+  font-weight: normal;
+}
+
+.slick-header {
+  border-bottom: 1px solid silver;
+}
+
+.cell-title {
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+.toggle {
+  height: 9px;
+  width: 9px;
+  display: inline-block;
+}
+
+.toggle.expand {
+  background: url(../images/expand.png) no-repeat center center;
+  background-size: contain;
+}
+
+.toggle.collapse {
+  background: url(../images/collapse.png) no-repeat center center;
+  background-size: contain;
+}
+
+.load-un {
+  color: green !important;
+  font-weight: bold;
+}
+
+.mr-3 {
+  margin-right: 3px;
+}
+
+.mb-40 {
+  margin-bottom: 40px;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+#select-translation-target-fields-page .summary {
+  position: relative;
+}
+
+.continue-translate-button {
+  position: absolute;
+  right: 5px;
+  bottom: 20px;
+  background: #186ab9;
+  color: white;
+  padding: 3px 5px;
+  border: none;
+  border-radius: 3px;
+  font-size: 1.2em !important;
+}
+
+.back-button {
+  position: absolute;
+  top: 5px;
+  border: none;
+  background-color: transparent;
+  color: #186ab9;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.translation-input-form .input-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 7px;
+  cursor: pointer;
+}
+
+.translation-input-form .input-group input {
+  width: 30px;
+}
+
+.default-lang-section,
+.language-tags-section {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.translate-normalization-component select {
+  font-size: 13px;
+  border: 1px solid #9fafbc;
+  cursor: pointer;
+  margin-top: 5px;
+  width: 130px;
+}
+.translate-normalization-component select:focus {
+  font-size: 13px;
+}
+
+.language-tags-grid {
+  margin-bottom: 10px;
+}
+.language-tag {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  align-items: center;
+  gap: 20px;
+}
+.language-tag.header {
+  margin-bottom: 10px;
+}
+
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.button-section {
+  position: relative;
+  padding-top: 20px;
+  margin-top: 5px;
+}
+
+.button-section .errors {
+  color: rgb(183, 0, 0);
+  position: absolute;
+  top: 0;
+  margin: 0;
+}
+
+.translate-button {
+  width: fit-content;
+  background: #186ab9;
+  color: white;
+  padding: 3px 5px;
+  border: none;
+  border-radius: 3px;
+  font-size: 1.2em !important;
+}
+
+.visibility-hidden {
+  visibility: hidden;
+}

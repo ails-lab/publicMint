@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+   <class name="gr.ntua.ivml.mint.persistent.TranslationLiteral" table="translation_literal">
+	    <id name="dbID" column="translation_literal_id">
+		    <generator class="sequence">
+		    	<param name="sequence">seq_translation_literal_id</param>
+		    </generator>
+	    </id>
+		<many-to-one name="translation" 
+        column="translation_id"
+        not-null="true"/>
+
+		<property name="hash"/>        
+		<property name="fieldName" column="field_name"/>        
+	    <property name="originalLiteral" column="original_literal"/>
+	    <property name="translatedLiteral" column="translated_literal"/>
+	    <property name="count" />
+	    <property name="originalLanguageTag" column="original_language_tag"/>
+	    <property name="usedLanguage" column="used_language"/>
+	    <property name="targetLanguage" column="target_language"/>
+	    <property name="humanReview" column="human_review"/>
+	    <property name="translationScore" column="translation_score"/>
+	    <property name="detectionScore" column="detection_score"/>	
+	    <property name="itemId" column="item_id" />    
+   </class>
+
+</hibernate-mapping>

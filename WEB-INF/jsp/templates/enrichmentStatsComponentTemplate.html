@@ -1,0 +1,19 @@
+<script type="text/x-template" id="enrichment-stats-component">
+	<!-- Select box for the stats you want to see-->
+	<!-- scrollable table with the view on the stats, could be more than 2 columns -->
+	<div style="border:1px;border-radius:3px; width:95%; margin-left:5%; margin-top:5px;" id="enrichmentStatsComponent">
+		<div id="statSelector" style="margin-top:2em;">
+			<select style="padding:2px;" v-model="selectedStatsName" @change="createSlick()">
+				<option v-for="value in availableTitles()" :value="value">{{ value }}</option>
+			</select>
+		</div>
+		<div style="margin-top:1em;width:80%;margin-left:5%;font-size:0.9em" v-if="(stat != null ) && (stat.description)"> {{ stat.description }} </div>
+		<div id="slickBox" style="height:30em;margin-top:2em;margin-right:10px;"> </div>
+	</div>
+</script>
+<style>
+	#statSelector select:focus {
+		font-size: 1em;
+	}
+</style>
+	

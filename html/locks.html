@@ -1,0 +1,99 @@
+<script>
+  new Vue({
+    el: "#locks",
+    data: {
+    	locks: [],
+  		isMounted: false
+    },
+    created: async function () {
+    },
+    mounted: function() {
+    	this.repeat();
+    },
+    methods: {
+    	isVisible: function() {
+    		return (document.querySelector( "#locks") != null); 
+    	},
+    	
+		repeat: function() {
+			if( this.isVisible()) {
+				this.getLocks();
+				setTimeout( ()=> this.repeat(), 60000 );		
+			}
+		},
+    	
+    	getLocks: async function() {
+    		let self = this;
+ 	       $.ajax({
+ 		         url: "api/locks",
+ 		         type: "GET",
+ 		         error: function (resp) {
+ 		           alert("Cant get locks \n" + resp.err );
+ 		           self.closeTab();
+ 		         },
+ 		         success: function (resp) {
+ 		        	//expecting a json array
+ 		           	self.locks = resp;
+ 		         }
+ 		       });
+    	},
+    	releaseLock: async function( lockId ) {
+    		let self = this;
+  	       $.ajax({
+		         url: "api/locks?lockId="+lockId,
+		         type: "DELETE",
+		         error: function (resp) {
+		           alert("Lock release failed \n" + resp.err );
+		         },
+		         success: function () {
+		        	//expecting a json array
+		           	getLocks();
+		         }
+		       });
+    		
+    	},
+
+      closeTab: function() {
+	      let thisPanel = $($(this.$el).closest('div[id^=kp]'))
+	      let previousPanelId = 'kp' + (thisPanel[0].id.at(-1) - 1);
+	      let previousPanel = $('div[id^='+previousPanelId+']');
+	      $K.kaiten('reload', previousPanel);
+	      $K.kaiten('remove', thisPanel, false);
+	   }
+    },
+  });
+</script>
+
+<div class="panel-body">
+  <div id="locks" class="ui-widget block-nav">
+  	 <div class="summary">
+  	   <div v-if="locks.length > 0">
+		   <div class="label">Lock list</div>  
+			<table>
+				<tr class="header" >
+					<td>Lock</td>
+					<td>Time</td>
+					<td>User</td>
+					<td>Release</td>
+				</tr>
+		          <tr  v-for="lock in locks" class="items">
+		            <td>{{ lock.name }}</td>
+		            <td :title="lock.timestamp"> {{ lock.prettyTime }}</span></td>
+		            <td>{{ lock.login }}</td>
+		            <td @click="releaseLock(lock.id)"> <img src="images/trash_can.png"></td>
+		          </tr>
+		</table>
+	   </div>
+	   <div v-if="locks.length == 0 ">
+	     <div class="label">There are no locks in the system</div>  
+	   </div>	
+	</div>
+  </div>
+</div>
+	
+<style>
+.header {
+	height:2em;
+	font-weight:bold;
+}
+</style>

@@ -1,0 +1,114 @@
+<script>
+  getValueAndStoreToSessionStorage("datasetId", "sandbox_options");
+  new Vue({
+    el: "#sandbox-options",
+    data: {
+        pickMethod: 'default',
+        datasetId: null,
+        size: 1000,
+        skip:0
+    },
+    created: async function () {
+      this.datasetId = sessionStorage.getItem("datasetId");
+    },
+    methods: {
+    	uploadToSandbox: async function() {
+    		let params = "";
+			// make proper params for call
+			// size ... needs to be a number.. if not, omit
+			if(( this.size > 0 ) && ( this.size < 1000)) {
+				params += "&size="+this.size;
+			}
+			if( this.pickMethod != "default" ) {
+				params +=  "&pickMethod=" + this.pickMethod;
+			}	
+			if( this.pickMethod == "fixedInterval" ) {
+				params += "&skip=" + this.skip;
+			}
+ 			
+	       $.ajax({
+	         url: "api/sandbox/create?datasetId=" + this.datasetId + params,
+	         type: "GET",
+	         context: this,
+	         error: function (resp) {
+	           alert("Failed to start sandbox upload \n" + resp.err );
+	           this.closeTab();
+	         },
+	         success: function () {
+	           this.closeTab();
+	         }
+	       });
+      },
+
+      closeTab: function() {
+	      let thisPanel = $($(this.$el).closest('div[id^=kp]'))
+	      let previousPanelId = 'kp' + (thisPanel[0].id.at(-1) - 1);
+	      let previousPanel = $('div[id^='+previousPanelId+']');
+	      $K.kaiten('reload', previousPanel);
+	      $K.kaiten('remove', thisPanel, false);
+	   }
+    },
+  });
+</script>
+
+<div class="panel-body">
+  <div id="sandbox-options" class="ui-widget block-nav">
+  <div class="pick-count">
+	<label>Number of records, default 1000 or dataset size. </label> 
+	<input type="number" min="1" max="1000" v-model="size" >
+  </div>  
+	  <div class="input-group">
+		<input type="radio"  value="default" v-model="pickMethod" >
+		<label for="default">Records from beginning</label>
+	  </div>
+	  <div class="input-group">
+		<input type="radio" value="random" v-model="pickMethod" >
+	    <label for="random">Random records</label>
+	  </div>
+	  <div class="input-group">
+		<input type="radio" value="spread" v-model="pickMethod" >
+		<label for="spread">Evenly spread records</label>
+	  </div>
+	  <div class="input-group">
+		<input type="radio" value="fixedInterval" v-model="pickMethod" >
+		<label for="spread">Records with interval </label>
+		<input type="number" v-model="skip" v-if='pickMethod=="fixedInterval"'>
+	  </div>
+	  <!--  div class="input-group">
+		<input type="radio" id="field" value="field" v-model="pickMethod" >
+		<label for="field">Pick records representing this field</label>
+		
+	  </div-->
+   <button class="submit-button" @click="uploadToSandbox()" >Upload to sandbox</button>
+  </div>
+</div>
+
+<style>
+
+#sandbox-options input[type=number] {
+  width: 5em;
+  text-align: center;
+}
+#sandbox-options input[type=radio] {
+  position: relative;
+  top:2px;
+}
+.submit-button {
+  float: right;
+  margin-top:5px;
+  margin-right:20px;
+  background: #186ab9;
+  color: white;
+  padding: 3px 5px;
+  border: none;
+  border-radius: 3px;
+  font-size: 1.2em !important;
+}
+#sandbox-options {
+	font-size: 1.2em;
+}
+#sandbox-options .input-group {
+	padding-left: 2em; 
+	padding-top: 3px;
+}
+</style>

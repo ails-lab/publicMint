@@ -1,0 +1,43 @@
+{
+	"/datasetLabels/{datasetId}": {
+		"get": {
+			"tags": [
+				"Dataset"
+			],
+			"security": [
+				{
+					"SessionCookie": []
+				}
+			],
+			"summary": "Get folders and project descriptions for given dataset",
+			"parameters": [
+				{
+					"name": "datasetId",
+					"in": "path",
+					"description": "Id of the dataset",
+					"required": true,
+					"schema": {
+						"type": "integer"
+					}
+				}
+			],
+			"operationId": "RequestHandler/datasetLabelsGet()",
+			"responses": {
+				"200": {
+					"description": "Successful operation",
+					"content" : {
+						"application/json" : {
+							"schema": {
+								"description": "A json object with two arrays, \"folders\" and \"projects\" containing
+								\"label\" \"color\" \"editable\" \"selected\" fields"	
+							}
+						}
+					}
+				},
+				"400": {
+					"$ref": "#/components/responses/error"
+				}
+			}
+		}
+	}
+}

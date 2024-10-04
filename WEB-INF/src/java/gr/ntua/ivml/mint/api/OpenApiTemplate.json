@@ -1,0 +1,80 @@
+{
+	"openapi": "3.0.0",
+	"info": {
+		"description": "This is the Mint Backend API documentation.",
+		"version": "1.0.0",
+		"title": "Mint",
+		"contact": {
+			"email": "stabenau@image.ntua.gr"
+		}
+//		,
+//		"license": {
+//			"name": "",
+//			"url": ""
+//		}
+	},
+	"servers": [ 
+		{
+			"url":"dummyEntry, will be overwritten by HomeController"
+		}
+	],
+	"tags": [
+		{
+			"name": "User",
+			"description": "User related calls."
+		},		
+		{
+			"name": "Lock",
+			"description": "Lock management"
+		},
+		{
+			"name": "Organization",
+			"description": "Organizations provide workspace for uploads and are usually seperated from each other" 
+		},
+		{
+			"name": "Dataset",
+			"description": "A dataset is a group of records that are always processed together. Datasets can be derived from each other by Transformations or Enrichments" 
+		},
+		{
+			"name":"Values",
+			"description": "Value related functionality"
+		}
+	],
+	"schemes": [
+		"http"
+	],
+	"paths": {
+		
+	},
+	"components": {
+		"securitySchemes": {
+		    "SessionCookie": { 
+      			"type": "apiKey",
+      			"in": "cookie",
+      			"name": "JSESSIONID"
+      		} 
+		},
+		"responses": {
+			"error": {
+				"description": "Error with json error object",
+				"content": {
+					"application/json": {
+						"schema": {
+							"properties": {
+								"error": {
+									"type": "string",
+									"example": "No user logged in."
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"schemas": {
+		},
+		"parameters": {
+		}
+	}
+}
+

@@ -1,0 +1,143 @@
+<script type="text/x-template" id="combine-filter-editor">
+
+    <div id="combineFilterEditor">
+        <div class="filterRow" v-if="letter != null">
+            <div  class="col1">
+                Filter
+            </div>
+            <div class="col2" >
+                <div class="letter" > {{ letter }} </div>
+            </div>
+        </div>
+        <div class="filterRow">
+            <div class="col1"> Negate </div> 
+            <div class="col2">
+                <input type="checkbox" v-model="negate" />
+            </div>
+        </div>
+
+        <div class="filterRow">
+
+            <div class="col1"> Function </div>
+            <div class="col2">
+                <select v-model="functionName" @change="valueInit()">
+                    <option v-for="combineFunction in combineFunctions" :value="combineFunction">{{combineFunction}}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="filterRow" v-if="functionName != null">
+
+            <div class="col1"> Parameter </div>
+            <!-- Function argument area -->
+
+        
+            <div class="col2">
+                <!-- the functions that allow for multiple selections / inputs -->
+                <!-- adding removing editing  @change="valueChange( index )" -->
+                <div style="display:flex;flex-direction:column;justify-content:flex-start; align-items:flex-start">
+                    <div v-for="(value, index) in values" >
+                        <div v-if="index == activeValue" class="valueRow" >
+                        <!-- When the combineFilter.activeValue is changed, activeNegate and activeFilter have to go in combineFilter.values[ combineFilter.activeValue ]-->
+                            <!-- and the new values have to be initialized -->
+                            <img src="images/img_status_meet.png" @click="negateValue( index )" />
+                            <div v-show="values[index].negate">  not  </div>
+                            <select v-model="values[index].letter" >
+                                <option v-for="filter in availableFilterLetters" :value="filter">{{filter}}</option>
+                            </select> 
+                            <div v-if="(index == values.length-1) && (values[index].letter != null) ">
+                                <img src="images/mapping/images/icons/add.png" @click="addValue( index )">
+                            </div>
+                        </div>
+
+                        <div v-else class="valueRow">
+                            <div @click="activeValue=index" style="display:flex;align-items:center;">
+                                <div v-show="value.negate">not</div> 
+                                <div class="letter">{{value.letter}}</div>
+                            </div>
+
+                            <div v-if="(index == values.length-1) && (values[index].letter != null) ">
+                                <img src="images/mapping/images/icons/add.png" @click="addValue( index )">
+                            </div>
+
+                            <div v-if="(values.length>2) && ( index != activeValue )">
+                                <img src="images/mapping/images/icons/delete.png" @click="values.splice( index, 1 )" />	
+                            </div>
+                        </div>
+
+                        <div v-if="index+1<values.length" class="valueSpacer">
+                            <div v-if="(functionName == 'if..then') && ( index == values.length-2)" >
+                                then
+                            </div>
+                            <div v-else-if="functionName == 'if..then'"> and </div>
+                            <div v-else> {{ functionName }} </div>
+                        </div>
+                    </div>
+                </div>  
+            </div>		
+        </div >
+
+        <div class="filterRow buttons">
+            <div @click="saveCombineFilter()"> Save Filter</div>
+            <div @click="$emit('close-combine-editor')"> Cancel </div>
+        </div>
+    </div>
+</script>
+
+
+<style>
+
+#combineFilterEditor .buttons {
+    display:flex;
+    justify-content:space-around;
+}
+
+#combineFilterEditor {
+    display:flex;
+    flex-direction: column;
+    justify-content:space-between;
+    width:80%;
+}
+
+#combineFilterEditor .filterRow {
+    margin-top:0.5em;
+    display: flex;
+    flex-direction:row;
+    justify-content: center;
+    gap:1em;
+}
+#combineFilterEditor .col1 {
+    display:flex;
+    width: 20%;
+    justify-content:flex-end;
+    align-items:flex-start;
+}
+
+#combineFilterEditor .col2 {
+    display:flex;
+    width: 60%;
+    justify-content:flex-start;
+    align-items:flex-start;
+}
+
+#combineFilterEditor .valueList {
+    display:flex;
+    flex-direction:column;
+}
+
+#combineFilterEditor .valueRow {
+		display:flex;
+		flex-direction:row;
+        justify-content: flex-start;
+        gap:0.5em;
+}
+
+#combineFilterEditor .valueSpacer {
+		display:flex;
+		align-items:center;
+		height:2em;
+}
+
+
+</style>
+

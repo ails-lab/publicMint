@@ -1,0 +1,194 @@
+<script type="text/x-template" id="annotation-filter-component">
+
+	<div id="annotationFilters" >
+		<div class="filterHead"> 
+			Basic Filters <img src="images/infosmall.png" @click="toggle.info1 = !toggle.info1" />
+		</div>
+		<div class="explain" v-show="toggle.info1"> Basic filters are conditons on the attributes of the enrichment. One condition is one basic filter.
+			 Basic filters can be combined to create more sophisticated filters. The filters "set", "replace" and "setByField" are
+			 not filters at all, but allow for simple changes in the annotations. 
+		</div>	
+		<div id="atomicFiltersList" style="display:flex; flex-direction:column;">
+			<div class="summaryFilter" v-for="af in Object.values( atomicFilters )" @click="editAtomicFilter( af )">
+				<div> <img src="images/mapping/images/icons/delete.png" v-if="usedFilters[af.letter] == null" @click="removeFilter( af )"> </div>
+				<div class="letter"> {{af.letter}} </div>
+				<div> {{ atomicFunctionSummaryString( af ) }} </div>
+			</div>
+			<div v-if="( atomicFilter==null) && ( combineFilter==null )" 
+			@click="atomicFilter={}" class="enrichButton">Add new Filter</div>
+
+		</div>
+		<atomic-filter-editor :enrichment="enrichment" :filter="atomicFilter" v-if="atomicFilter != null" 
+			@close-atomic-editor="atomicFilter=null" @save-atomic-editor="saveAtomicEditor" />
+
+		<div class="divider"> </div>
+		<!-- Combine Filter Section -->
+		<div class="filterHead"> 
+			Combine Filters <img src="images/infosmall.png"  @click="toggle.info2 = !toggle.info2" />
+		</div>
+		<div class="explain" v-show="toggle.info2">Combine Filters allow the logical combination of other filters  (basic or other combine filters) into more complex filtering conditions. 
+			Examples would be: Apply only when "if scope==dc:format then (must be) confidence>0.4". Apply only when  "(review==accepted) or ( confidence>0.9)". The if..then combinator
+			should be used when you want to modify a value as in "if review==accepted then set confidence=1.0".  
+		</div>	
+
+		<div id="combineFilterList"  style="display:flex; flex-direction:column;">
+
+			<div v-for="cf in Object.values( combineFilters )" @click="editCombineFilter( cf )" class="summaryFilter">
+				<div> <img src="images/mapping/images/icons/delete.png" v-if="usedFilters[cf.letter] == null" @click="removeFilter( cf )"> </div>
+				<div class="letter"> {{cf.letter}} </div>
+				<div> {{ combineSummaryString( cf ) }} </div>
+			</div>
+		</div>
+
+		<div v-if="(atomicFilter == null) && (combineFilter==null) && ( Object.keys( atomicFilters ).length > 1)" 
+			@click="combineFilter={}" class="enrichButton">Add new Filter</div>
+
+		<combine-filter-editor :availableFilterLetters="availableFilters()" :filter="combineFilter" v-if="combineFilter != null" 
+			@close-combine-editor="combineFilter=null" @save-combine-editor="saveCombineEditor" />
+			
+		<div class="divider"> </div>
+
+		<div class="filterHead"> 
+			Filter chain <img src="images/infosmall.png"  @click="toggle.info3 = !toggle.info3" />
+		</div>
+		<div class="explain" v-show="toggle.info3"> The filter chain defines which of the filters you defined should be used and in what order. Every annotation passes the filter chain
+			from top to bottom. In each step, it can be either accepted, based on the given filter, rejected based on the given filter or be passed down to the next element 
+			in the chain. The last element in the chain must be either "Accept the rest" or "Reject the rest". If you specify nothing, the default is to accept everything.
+			If you want to modify any annotations prior to using them, you need to select a "Modify &lt;filter&gt;" at some point in the chain.
+		</div>	
+
+			
+		<div id="filterChain" style="display:flex;flex-direction:column;align-items:flex-start;">
+			<template v-for="(cl,index) in filterChain">
+				<div style="display:flex; flex-direction:row; background-image:url('images/blue_down_arrow.jpg');background-size:contain; background-repeat:no-repeat;margin:2px 0px;"
+					@click="filterChain.splice( index,0,{type:'',value:''})" v-if="availableFilters().length > 0">
+					<img src="images/mapping/images/icons/add.png" style="padding:10px;margin-left:2em;"/>
+				</div>
+				
+				<div v-if="filterChain.length-1==index" style="display:flex;gap:0.5em;align-items:flex-start">
+					<select v-model="filterChain[index].type" @change="filterChainChange()">
+						<option v-for="type in ['accept','reject']" :value="type">{{type}}</option>
+					</select>
+					{{ index==0?" all annotations":" remaining annotations"}}
+				</div>
+				<div v-else style="display:flex;gap:0.5em;align-items:flex-start">
+					<div>
+						<select v-model="filterChain[index].type" @change="filterChainChange()">
+							<option v-for="type in ['accept','reject','modify']" :value="type">{{type}}</option>
+						</select>
+					</div>
+					<div v-if="filterChain[index].type!='modify'">{{ index==0?" all annotations":" remaining annotations"}} where filter </div>
+					<div v-else>{{ index==0?" all annotations":" remaining annotations"}} with filter </div>
+					<div>
+						<select v-model="filterChain[index].letter" @change="updateUsedFilters()">
+							<option v-for="value in availableFilters()" :value="value">{{value}}</option>
+						</select>
+					</div>
+					<div v-if="filterChain[index].type!='modify'"> is true </div>
+					<div v-if="index<filterChain.length-1" @click="removeFilterChain( index )"> <img src="images/mapping/images/icons/delete.png"> </div>
+				</div>
+			</template>
+		</div>
+
+		<div class="divider"> </div>
+
+		<div style="display:flex; justify-content:flex-start; gap:3em;">	
+			<div class="enrichButton" id="submit" @click="submitOrTest(true)"> Submit </div>
+			<div class="enrichButton" id="test" @click="submitOrTest(false)" v-if="filterChain.length > 1"> Test </div>
+		</div>	
+
+	</div>
+</script>
+
+
+
+<style>
+	.valueIcons {
+		display:flex;
+		flex-direction:row;
+		align-items:center;
+		gap:5px;
+	}
+
+	.explain {
+		display:flex;
+		width:80%;
+		font-size:0.9em;
+		margin-left:4em;
+		margin-bottom:1em;
+	}
+	.filterHead {
+		font-size:1.5em;
+		font-weight:bold;
+		margin-bottom:0.5em;
+	}
+
+	#annotationFilters {
+		margin-top:3em;
+		margin-left:2em;
+		display:flex;
+		flex-direction:column;
+		align-items:flex-start;
+	}
+	
+	#annotationFiltersList {
+		display:flex;
+		flex-direction:column;
+	}
+	
+	.letter {
+	    font-family:monospace;
+		background: #ffcd35;
+		border-radius: 50%;
+		font-weight: bold;
+		text-align:center;
+		display:flex;
+		justify-content:center;
+		align-items:center;
+		padding:3px;
+		width:1.1em;
+	}
+	.summaryFilter {
+		padding: 5px 1em;
+		background-image: linear-gradient( rgb(198, 224, 249),  rgb(198, 227, 255));
+		border-radius: 3px;
+		margin-left:30px;
+		margin-top:2px;
+		margin-bottom:2px;
+		display:flex;
+		justify-content: flex-start;
+		align-items:center;
+		gap:10px;
+	}
+
+	.combineSeparator {
+		display:flex;
+		align-items:center;
+		height:2em;
+	}
+
+	.summaryFilter img {
+		margin-left: -30px;
+	}
+
+	.enrichButton {
+		background-image:linear-gradient( #fefefe, #f2f2f2);
+		border-radius: 0.5em;
+		padding: 0.3em 1.5em;
+		margin:1em 3em;
+		width:max-content;
+		cursor:pointer;
+	}
+	
+	#annotationFilters .divider {
+	  width: 80%;
+	  height: 2px;
+	  margin-left: 10%;
+	  margin-right: 10%;
+	  margin-top: 1em;
+	  background-color: lightgray;
+	  margin-bottom: 1.5em;
+	}
+</style>
+
+	

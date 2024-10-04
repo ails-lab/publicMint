@@ -1,0 +1,286 @@
+<script>
+
+	new Vue({
+		el: "#image-analysis",
+		data: () =>  { 
+			return {
+				datasetId:null,
+				expertMode:false,
+				analysisType:"COLOR",
+				includeWebResources:true,
+				excludeRegexp: "",
+				enrichmentName: "",
+				
+				objectParameters: {
+					  min_confidence:"0.8", //param
+					  max_objects:"1", //param
+					  service:"blip-vqa-base", // or "internal" or "GoogleVision"
+					  service_key:"" // presumably only for google
+				},
+				colorParameters: {
+					selector : {
+						conformsTo:"http://www.w3.org/TR/media-frags/",
+						type : "FragmentSelector",
+						value :"xywh=percent:0,0,100,100"
+					},
+					max_colors : "3",
+					min_area: "0.15",
+					foreground_detection: true,
+					service:"blip-vqa-base", // or internal
+					ld_source: "Wikidata" // or "FT"				
+				}
+			}
+		},
+				
+		// if there is a dataset id, than this is for picking and applying an erichment
+	    created: async function () {
+    	},
+    	mounted: function() {
+			this.datasetId=panelUrlParam( this.$el, "datasetId" ) 
+    	},
+    	methods: {   
+    		submit: function(  ) {
+        		let self = this;
+        		let params = {}
+        		params.analysisType = this.analysisType;
+        		params.includeWebResources = this.includeWebResources;
+        		if( this.excludeRegexp.trim().length > 0 ) {
+        			params.excludeRegexp = this.excludeRegexp 
+        		}
+        		if( this.enrichmentName.trim().length > 0 ) {
+        			params.enrichmentName = this.enrichmentName; 
+        		}
+        		if( this.expertMode ) {
+        			if( this.analysisType == 'COLOR') {
+        				params.advanced = this.colorParameters;
+        			} else {
+        				params.advanced = this.objectParameters;
+        			}
+        		}
+      	       	$.ajax({
+    		         url: "api/annotation/imageAnalysis?datasetId="+self.datasetId,
+    		         type: "POST",
+    		         data: JSON.stringify( params ),
+    		         error: function (resp) {
+    		           alert("Image analysis not queued\n" + resp.err );
+    		         },
+    		         success: function () {
+    		        	 Mint2.dialog( "Enrichment of Image analysis queued.\nThis might take a while!" );
+    		        	 self.closeTab()
+    		         }
+    		       });
+        		
+        	},
+			
+   	      closeTab: function() {
+   		      let thisPanel = $($(this.$el).closest('div[id^=kp]'))
+   		      let previousPanelId = 'kp' + (thisPanel[0].id.at(-1) - 1);
+   		      let previousPanel = $('div[id^='+previousPanelId+']');
+   		      $K.kaiten('reload', previousPanel);
+   		      $K.kaiten('remove', thisPanel, false);
+   		   }
+	    },
+  	});
+  
+</script>
+
+<div class="panel-body">
+  <div id="image-analysis" class="ui-widget block-nav" >
+	<div class="summary">
+		<div class="label"> Analyse images in dataset</div>
+		<div class="info">
+			<p>Run image anaylsis to find either prevalent colors or objects in the images. By default all "isShownBy" URLs get analysed.
+			Additionally you can choose to analyse all WebResources, however, results will be attached to the ProvidedCHO, not to individual web resources. 
+			The process will ignore URLs that are not reporting images,
+			but you can optionally supply a regular expression to exclude matching URLs. </p>
+			
+			<p>The predefined settings can be modified with "Advanced Settings".</p> 
+
+			<p>Depending on your parameters, the runtime can be up to 6 seconds per URL.</p>
+			
+			<p>During the runtime an Enrichment-object is created that, when finished, can be previewed and filtered before it is applied 
+			  to the analysed dataset.</p>
+		</div>
+	</div>
+	
+	<div style="margin-left:3em;margin-top:1em;" style="display:flex; flex-direction:column">
+	
+	<div class="fitem">
+		<label for="setName">
+			The created Enrichment is auto-named, but you can supply your own name here
+		</label>
+		<input type="text" id="setName" v-model="enrichmentName" />
+	</div>
+	
+	<div class="fitem">
+		<label for="includeWebResources">
+			Include WebResource URLs in analysis
+		</label>
+		<input type="checkbox" v-model="includeWebResources"/>
+	</div>
+
+	<div class="fitem">
+		<label for="excludeRegexp">
+			If specified, every url that matches is excluded
+		</label>
+		<input type="text" id="excludeRegexp" v-model="excludeRegexp" />
+	</div>
+	
+	<div class="fitem" >
+       	<input type="radio" id="optionAnalyzeColor" name="analysisType" v-model="analysisType" value="COLOR" />
+		<label for="optionAnalyzeColor" style="margin-right:2em;">
+      		Analyze color
+    	</label>
+   		<input type="radio" id="optionAnalyzeObject" name="analysisType" v-model="analysisType" value="OBJECT">
+    	<label for="optionAnalyzeObject" >
+      		Analyze objects
+    	</label>
+	</div>
+	<div style="margin-top:1em;">
+		<svg v-if="!expertMode" @click="expertMode = !expertMode" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+  			<polygon points="5,2 19,12 5,22" fill="black"/>
+		</svg>
+		<svg v-if="expertMode" @click="expertMode = !expertMode" xmlns="http://www.w3.org/2000/svg" 
+			width="1em" height="1em" viewBox="0 0 24 24" transform="rotate(90)">
+  			<polygon points="5,2 19,12 5,22" fill="black"/>
+		</svg>
+		 Advanced Setting
+	</div>
+	
+	<div v-if="!expertMode" style="margin-top:1em; margin-left:2em; font-style:italic; font-size:90%; width:40%">
+	If you close the advanced settings, the analysis will run with the default parameters, regardless if you changed any settings.
+	</div>
+	
+	<div v-if="expertMode" style="margin-left:2em;">
+		<div v-if="analysisType=='OBJECT'">
+
+			<div class="fitem">
+				<label for="minConfidence">
+					Minimum confidence
+				</label>
+				<input type="text" id="minConfidence" v-model="objectParameters.min_confidence" size="5" />
+			</div>
+
+			<div class="fitem">
+				<label for="maxObjects">
+					Maximum number of detected objects
+				</label>
+				<input type="text" id="maxObjects" v-model="objectParameters.max_objects" size="5" />
+			</div>
+			
+			<div class="fitem">
+				<label for="service">
+					Method of detection
+				</label>
+				<select id="service" v-model="objectParameters.service">
+					<option value="blip-vqa-base" selected >blip-vqa-base</option>
+					<option value="internal" >internal</option>
+					<option value="GoogleVision" >GoogleVision</option>
+				</select>
+			</div>
+			
+			<div class="fitem">
+				<label for="serviceKey">
+					For Google Vision you need to provide your own API key
+				</label>
+				<input type="text" id="serviceKey" v-model="objectParameters.service_key" size="5" />
+			</div>
+		</div>
+		<div v-if="analysisType=='COLOR'">
+			<div class="fitem">
+				<label for="maxColors">
+					Maximum number of detected colors
+				</label>
+				<input type="text" id="maxColors" v-model="colorParameters.max_colors" size="5" />
+			</div>
+			
+			<div class="fitem">
+				<label for="minArea">
+					Minimum covered area
+				</label>
+				<input type="text" id="minArea" v-model="colorParameters.min_area" size="5" />
+			</div>
+
+			<div class="fitem">
+				<label for="foregroundDetection"> 
+					Apply foreground detection
+				</label>
+				<input type="checkbox" v-model="colorParameters.foreground_detection" />
+			</div>
+
+
+			<div class="fitem">
+				<label for="selectorSpec">
+					Selector conforms to
+				</label>
+				<input type="text" id="selectorSpec" v-model="colorParameters.selector.conformsTo" size="30" />
+			</div>
+			
+			<div class="fitem">
+				<label for="selectorType">
+					Selector type
+				</label>
+				<input type="text" id="selectorType" v-model="colorParameters.selector.type" size="20" />
+			</div>
+			
+			<div class="fitem">
+				<label for="selectorValue">
+					Selector value
+				</label>
+				<input type="text" id="selectorValue" v-model="colorParameters.selector.value" size="20" />
+			</div>
+			
+			<div class="fitem">
+				<label for="service">
+					Method of detection
+				</label>
+				<select id="service" v-model="colorParameters.service">
+					<option value="blip-vqa-base" selected >blip-vqa-base</option>
+					<option value="internal" >internal</option>
+				</select>
+			</div>
+			
+			<div class="fitem">
+				<label for="ldSource">
+					Thesaurus to use
+				</label>
+				<select id="ldSource" v-model="colorParameters.ld_source">
+					<option value="Wikidata" selected >Wikidata</option>
+					<option value="FT" >Europeana Fashion Thesaurus</option>
+				</select>
+			</div>
+		</div>
+	</div>
+	
+	<button @click="submit()" style="margin-top:2em; padding:2px;">Queue Analysis</button>
+	
+	
+  </div>
+</div>
+
+<style>
+	#image-analysis .fitem {
+		margin-top:1em;
+		width:80%;
+	}	
+	#image-analysis .fitem label {
+		margin-right:1em;
+	}	
+	
+	#image-analysis option {
+		padding-left:1em;
+		padding-right: 1em;
+		
+	}
+	#image-analysis select {
+		padding-left:1em;
+		padding-right: 1em;
+		
+	}
+	
+	#image-analysis input[type='text'] {
+		padding: 2px 5px 2px 5px;
+	}
+	
+	
+</style>

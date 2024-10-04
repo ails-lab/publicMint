@@ -1,0 +1,344 @@
+<script>
+  getValueAndStoreToSessionStorage("uploadId", "translation_review");
+  new Vue({
+    el: "#translation-review-page",
+    data() {
+      return {
+        uploadId: null,
+        literals: [],
+        dataset_details: {},
+        translationId: 0,
+        translations: [],
+        loading: true,
+        currentPage: 1,
+        totalPages: 1,
+        count: 20,
+        selectedTranslationId: '',
+        selectedSourceLang: '',
+        selectedTranslation: {},
+        selectedField: 'all'
+      };
+    },
+    created: async function () {
+      this.uploadId = sessionStorage.getItem("uploadId");
+    },
+    mounted: async function() {
+      await this.getDatasetDetails();
+      await this.getTranslationList();
+    },
+    watch: {
+      selectedTranslationId: function(current, previous) {
+        if (current != ''){
+          this.selectedTranslation = this.translations.find(translation => translation.translationId == current);
+        }
+        else {
+          this.selectedTranslation = {};
+          this.selectedSourceLang = '';
+          this.literals = [];
+          this.currentPage = 1;
+          this.totalPages = 1;
+        }
+      },
+      selectedSourceLang: async function(current, previous) {
+        if (current != ''){
+          await this.getTranslation(this.selectedTranslationId, this.selectedSourceLang, 0);
+          this.loading = false;
+        }
+        else {
+          this.selectedSourceLang = '';
+          this.literals = [];
+          this.currentPage = 1;
+          this.totalPages = 1;
+        }
+      },
+      selectedField: async function(current, previous) {
+        await this.getTranslation(this.selectedTranslationId, this.selectedSourceLang, 0);
+        this.loading = false;
+      },
+    },
+    methods: {
+      getDatasetDetails: async function () {
+				await $.ajax({
+					url: "api/datasetDetails/" + this.uploadId,
+					type: "GET",
+					context: this,
+					error: function () {
+						alert("Error while getting options for Dataset #" + this.uploadId);
+					},
+					success: function (response) {
+						this.dataset_details = response;
+					}
+				});
+			},
+      getTranslationList: async function () {
+				await $.ajax({
+					url: "api/translation/list?datasetId=" + this.uploadId,
+					type: "GET",
+					context: this,
+					error: function () {
+						alert("Error while getting list of translations #" + this.uploadId);
+					},
+					success: function (response) {
+						this.translations = response;
+            if(this.translations.length == 1) {
+              this.selectedTranslationId = this.translations[0].translationId;
+              this.selectedSourceLang = this.translations[0].defaultLanguage ? this.translations[0].defaultLanguage : this.translations[0].normalizedTags[0].normalizedLabel;
+            }
+					}
+				});
+			},
+      getTranslation: async function (id, srcLang, start) {
+        let fieldName = this.selectedField != 'all' ? '&fieldName=' + this.selectedField : '';
+				await $.ajax({
+					url: "api/translation/review?translationId=" + id + '&srcLang=' + srcLang + '&start=' + start + '&count=' +this.count + fieldName , // &fieldName=description
+					type: "GET",
+					context: this,
+					error: function () {
+						alert("Error while getting translation #" + this.uploadId);
+					},
+					success: function (response) {
+						this.literals = response.literals;
+            this.literals.map(literal => {
+              literal.rejected = false;
+              literal.translationInput = literal.translatedLiteral;
+            })
+            this.currentPage = Math.floor(response.start / response.max) + 1;
+            this.totalPages = Math.ceil(response.totalCount / response.max);
+            this.loading = false;
+					}
+				});
+			},
+      rejectTranslationLiteral: function (id) {
+        if(this.literals.find(literal => literal.translationLiteralId == id).rejected || !confirm("Are you sure you want to reject this translation?")) return;
+        this.loading = true;
+        $.ajax({
+          url: "api/translation/review",
+          type: "POST",
+          data: JSON.stringify([
+            {
+              "translationLiteralId": id,
+              "rejected" : true
+            }
+          ]),
+          context: this,
+          error: function () {
+            alert("Error while posting literal rejection #" + id);
+          },
+          success: function () {
+            this.literals.find(literal => literal.translationLiteralId == id).rejected = true;
+            this.loading = false;  
+          }
+        });
+
+      },
+      saveChanges: function () {
+        let body = this.literals.filter(literal => literal.translatedLiteral != literal.translationInput).map(literal => {
+          return {
+            "translationLiteralId": literal.translationLiteralId,
+            "translatedLiteral": literal.translationInput
+          }
+        })
+        this.loading = true;
+        $.ajax({
+          url: "api/translation/review",
+          type: "POST",
+          data: JSON.stringify(body),
+          context: this,
+          error: function () {
+            alert("Error while posting literal rejection #" + id);
+          },
+          success: function () {
+            this.getTranslation(this.selectedTranslationId, this.selectedSourceLang, (this.currentPage - 1) * this.count);
+          }
+        });
+
+      },
+      goToNextPage: async function() {
+        if (this.currentPage == this.totalPages) return;
+        if(this.literals.some(literal => literal.translatedLiteral != literal.translationInput)){
+          if(!confirm("You have some unsaved changes that will be lost if you change. Are you sure you want to continue?")){
+            return;
+          }
+        }
+        this.loading = true;
+        await this.getTranslation(this.selectedTranslationId, this.selectedSourceLang, this.currentPage * this.count);
+        this.loading = false;
+      },
+      goToPreviousPage: async function() {
+        if (this.currentPage == 1) return;
+        if(this.literals.some(literal => literal.translatedLiteral != literal.translationInput)){
+          if(!confirm("You have some unsaved changes that will be lost if you change. Are you sure you want to continue?")){
+            return;
+          }
+        }
+        this.loading = true;
+        await this.getTranslation(this.selectedTranslationId, this.selectedSourceLang, (this.currentPage - 2) * this.count);
+        this.loading = false;
+      },
+      getDropdownText: function(index) {
+        let date = this.translations[index].ended.slice(0, 16);
+        let tags = ', tags: ' + (this.translations[index].defaultLanguage ? this.translations[index].defaultLanguage : this.translations[index].normalizedTags.map(tag => tag.normalizedLabel).join(', '));
+        let fields = ', fields: ' + this.translations[index].fieldNames.join(', ');
+        return date + tags + fields;
+      },
+      closeTab: function() {
+      if(this.literals.some(literal => literal.translatedLiteral != literal.translationInput)){
+        if(!confirm("You have some unsaved changes that will be lost if you close the tab. Are you sure you want to continue?")){
+          return;
+        }
+      }
+      let thisPanel = $($(this.$el).closest('div[id^=kp]'))
+      let previousPanelId = 'kp' + (thisPanel[0].id.at(-1) - 1);
+      let previousPanel = $('div[id^='+previousPanelId+']');
+      $K.kaiten('reload', previousPanel);
+      $K.kaiten('remove', thisPanel, false);
+    }
+    },
+  });
+</script>
+
+<div class="panel-body">
+  <div id="translation-review-page" class="ui-widget block-nav">
+    <div class="panel-body">
+      <div id="translation-review-page" class="ui-widget block-nav">
+        <div class="summary">
+          <button v-if="selectedTranslationId && selectedSourceLang" class="back-button" @click="selectedTranslationId = ''">Back to translation selection</button>
+          <div class="label">
+            {{ dataset_details.name }} Translation Review
+          </div>
+          <div class="info">
+            {{ !selectedTranslationId || !selectedSourceLang ? 'Select which translation you want to review. Then select the source language you want to review.': 'Review the translation results.' }}
+            <br></br>
+          </div>
+          <button v-if="selectedTranslationId && selectedSourceLang" class="save-changes-button" @click="saveChanges()" >Save Changes</button>
+          <button v-if="selectedTranslationId && selectedSourceLang" class="close-button" @click="closeTab()">Close</button>
+        </div>
+        <div v-if="selectedTranslationId && selectedSourceLang" class="pagination">
+                <img src="images/buttons/previous.png" alt="Reject" @click="goToPreviousPage()" title="Previous Page">
+          Page {{currentPage}} of {{ totalPages }}
+                <img src="images/buttons/next.png" alt="Reject" @click="goToNextPage()" title="Next Page">
+        </div>
+
+        <select v-if="!selectedTranslationId || !selectedSourceLang" v-model="selectedTranslationId">
+          <option disabled selected value>Select a translation</option>
+          <option v-for="(translation, index) of translations" :key="translation.translationId" :value="translation.translationId">{{ getDropdownText(index) }}</option>
+        </select>
+        <select v-if="selectedTranslationId || !selectedSourceLang" v-model="selectedSourceLang" :disabled="!Object.keys(selectedTranslation).length">
+          <option disabled selected value>Select a language</option>
+          <option v-if="selectedTranslation.defaultLanguage" :value="selectedTranslation.defaultLanguage">{{ selectedTranslation.defaultLanguage }}</option>
+          <option v-else v-for="lang of selectedTranslation.normalizedTags" :key="lang.normalizedLabel" :value="lang.normalizedLabel">{{ lang.normalizedLabel }}</option>
+        </select>
+        <select v-if="selectedTranslationId && selectedSourceLang && selectedTranslation.fieldNames.length > 1" v-model="selectedField">
+          <option selected value="all">All</option>
+          <option v-for="field of selectedTranslation.fieldNames" :key="field" :value="field">{{ field }}</option>
+        </select>
+
+        <table v-if="!loading && selectedTranslationId && selectedSourceLang">
+          <thead>
+            <tr class="slick-header">
+              <th class="slick-header-column ui-state-default-vue">Source({{ selectedSourceLang }})</th>
+              <th class="slick-header-column ui-state-default-vue">Translation(en)</th>
+              <th class="slick-header-column ui-state-default-vue">Number of occurrences</th>
+              <th class="slick-header-column ui-state-default-vue">Confidence</th>
+              <th class="slick-header-column ui-state-default-vue">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="literal of literals" :key="literal.translationLiteralId" :class="literal.rejected ? 'rejected' : null">
+              <td class="slick-cell-vue literal">
+                <template v-if="selectedField === 'all'">
+                  ({{ literal.shortFieldname }}) 
+                </template>
+                 {{literal.srcLiteral}}
+              </td>
+              <td class="slick-cell-vue literal">
+                <textarea v-model="literal.translationInput" rows="3"/>
+              </td>
+              <td class="slick-cell-vue">{{ literal.count }}</td>
+              <td class="slick-cell-vue">{{ literal.translationScorePercent }}%</td>
+              <td class="slick-cell-vue">
+                <img src="images/reject.png" alt="Reject" @click="rejectTranslationLiteral(literal.translationLiteralId)" title="Reject">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+#translation-review-page .summary {
+  position: relative;
+}
+#translation-review-page .pagination {
+  font-size: 100%;
+  float: right;
+  margin: 10px;
+}
+#translation-review-page table {
+  margin-bottom: 30px;
+  border-top: 1px solid silver;
+}
+#translation-review-page .slick-cell-vue.literal{
+  white-space: unset;
+  text-overflow: unset;
+  overflow-wrap: break-word;
+  min-width: 120px;
+}
+#translation-review-page img{
+  cursor: pointer;
+  position: relative;
+  top: 3px;
+  margin-left: 3px;
+  margin-right: 3px;
+}
+#translation-review-page .slick-cell-vue img{
+  width: 20px;
+  aspect-ratio: 1;
+}
+#translation-review-page .slick-cell-vue textarea{
+  width: 95%;
+  resize: none;
+  padding: 3px;
+}
+#translation-review-page .slick-cell-vue textarea:focus{
+  font-size: 1em;
+  background: transparent;
+}
+select {
+  font-size: 13px;
+  border: 1px solid #9fafbc;
+  cursor: pointer;
+  margin: 5px;
+  width: 150px;
+}
+select:focus {
+  font-size: 13px;
+}
+.rejected{
+  background-color: #ff000045;
+}
+.save-changes-button {
+  position: absolute;
+  right: 65px;
+  bottom: 20px;
+  background: #186ab9;
+  color: white;
+  padding: 3px 5px;
+  border: none;
+  border-radius: 3px;
+  font-size: 1.2em !important;
+}
+.close-button {
+  position: absolute;
+  right: 5px;
+  bottom: 20px;
+  background: #d3d8dd;
+  color: rgb(8, 8, 8);
+  padding: 3px 5px;
+  border: none;
+  border-radius: 3px;
+  font-size: 1.2em !important;
+}
+</style>

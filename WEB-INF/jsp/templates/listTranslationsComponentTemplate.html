@@ -1,0 +1,162 @@
+<script type="text/x-template" id="list-translations-component">
+
+<div class="panel-body ui-widget block-nav translations" style="cursor:default">
+  <div v-if="translations.length > 0">
+    <div class="summary">
+      <div v-if="isDataset" class="label">Translations for '{{datasetName}}'</div>
+      <div v-else class="label">Translations for '{{orgName}}'</div>
+    </div>  
+    <div v-for="tl in translationPage" class="listbox" 
+		:class="{ errorBackground:isError(tl), runningBackground: isRunning(tl) }">
+    	<div >
+			<div class="infoDate" > {{ tl.started }} </div>
+			<div class="name" > {{ tl.dataset.name }}</div>
+    	</div>
+	
+     	<div v-if="isOk(tl)">
+			<div :title="'#'+tl.translationId" >{{ tl.stats.translatedLiterals }} literals {{summaryOfTranslation( tl )}}</div>
+			<div >
+	  			<img  class="clickme" @click="deleteTranslation(tl, true )" title="Delete" src="images/buttons/delete_hover.png" />
+	  			<!-- img  class="clickme" @click="apply(tl)" title="Apply Translations" src="images/editmaps.png" />
+	  			< img  class="clickme" @click="review(tl)" title="Review Translations" src="images/buttons/preview.png" /-->
+	  			<img  class="clickme" @click="shareClicked(tl.share,$event)" title="Copy Share link to Clipboard" src="images/shared.png" />
+			</div>
+      	</div>
+     	<div v-else-if="isError(tl)">
+			<div :title="'#'+tl.translationId" >Failed Translation</div>
+			<div >
+	  			<img  class="clickme" @click="deleteTranslation(tl, false )" title="Delete" src="images/buttons/delete_hover.png" />
+			</div>
+		</div>
+		<div v-else :title="'#'+tl.translationId">
+			<div> </div>
+			<img src="images/buttons/loading.gif" />
+		</div>   
+    </div>
+    <div class="paging" v-if="pagingNeeded()"> 
+      <div class="clickme" v-if="canPageBack()">
+	<span @click="pageBack()">&lt;</span>
+      </div> 
+      {{ this.start+1 }} - {{this.start+this.translationPage.length}} 
+      <div class="clickme" v-if="canPageForward()">
+	<span @click="pageForward()">&gt;</span>
+      </div>
+    </div>
+  </div>
+  
+  <div v-if="translations.length == 0 ">
+    <div class="summary">	
+      <div v-if="isDataset" class="label">There are no translations for Dataset '{{datasetName}}'</div>
+      <div v-else >There are no translations for Organization '{{orgName}}'</div>
+    </div>  
+  </div>
+  
+<div v-else style="display:flex; flex-direction:column;" class="importoptions" >
+	<div class="fitem urlupload">
+		<input type="radio" v-model="method" value="url" id="mth" @click="method='none'"  /> 
+			<label for="mth" >Import Pecat Review via URL</label>
+			<div v-show="method=='url'" >
+				<input type="text" id="urlField" v-model="url" />
+				<button @click="importPecat()"> Import </button>
+			</div>
+		</div>
+  </div>
+  <input style="display:none;" type="radio" v-model="method" value="none" id="mth"  />
+</div>
+</script>
+
+
+<style>
+.translations .importoptions label {
+	margin-left: 20px;
+}
+
+.translations .importoptions input[type='text']{
+	font-size:16px;
+	margin-left:7px;
+	margin-top:3px;
+	margin-bottom:2px;
+}
+
+.translations .fitem {
+		background-image:linear-gradient( #e7efff, #D3E0FA );	
+	    line-height: 15px;
+	    position: relative;
+	    width: 98%;
+	    border-radius: 5px 5px 5px 5px; 
+	    margin-bottom:4px;
+	    padding: 5px 5px 5px 5px;
+}
+
+.translations .importoptions {
+	display: flex;
+	flex-direction: column;
+	margin-top:1em;
+}
+  .translations.clickme {
+      cursor:pointer;
+  }
+
+  .translations .listbox.errorBackground {
+      background-image:linear-gradient( #fff6f0, #fff0e6);
+  }
+
+  .translations .listbox.runningBackground {
+      background-image:linear-gradient( #f6fff6, #e6ffe6);
+  }
+
+  .translations .listbox {
+      display:flex;
+      flex-direction:column;
+      background-image:linear-gradient( #fefefe, #f2f2f2);
+  }
+
+  .translations .listbox > div:first-child {
+      display:flex;
+      flex-direction:row;
+      padding-top:5px;
+      justify-content:space-between;
+      font-size:1.1em;
+      height: 16px;
+      margin-left: 10px;
+  }
+
+  .translations .listbox > div:nth-child( 2 ) {
+      padding:5px;
+      
+      display:flex;
+      margin-left:20px;
+      justify-content:space-between;
+      align-items:center;
+  }
+
+  .translations .listbox .name {
+      font-weight: bold;	
+  }
+
+  .translations .listbox .infoDate {
+      font-style:italic;
+  }
+
+  .translations .listbox img {
+      height: 16px;
+      padding-left:2px;
+  }
+
+  .translations .paging {
+      font-size:1.5em;
+      display:flex;
+      width:33%;
+      justify-content:space-around;
+      cursor:default;
+  }
+  .translations .paging .clickme {
+      text-decoration: underline;
+  }
+
+  .translations .header {
+      height:2em;
+      font-weight:bold;
+  }
+
+</style>

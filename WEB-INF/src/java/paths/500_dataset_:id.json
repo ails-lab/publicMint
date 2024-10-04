@@ -1,0 +1,35 @@
+{
+	"/dataset/{datasetId}": {
+		"delete": {
+			"tags": [
+				"Dataset"
+			],
+			"security": [
+				{
+					"SessionCookie": []
+				}
+			],
+			"summary": "Removes the dataset with given id, if its removable ",
+			"parameters": [
+				{
+					"name": "datasetId",
+					"in": "path",
+					"description": "Id of the dataset",
+					"required": true,
+					"schema": {
+						"type": "integer"
+					}
+				}
+			],
+			"operationId": "RequestHandler/datasetDelete()",
+			"responses": {
+				"200": {
+					"description": "Successful operation"
+				},
+				"400": {
+					"$ref": "#/components/responses/error"
+				}
+			}
+		}
+	}
+}

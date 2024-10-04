@@ -1,0 +1,28 @@
+<script>
+
+	getValueAndStoreToSessionStorage("orgId", "enrichments");
+	getValueAndStoreToSessionStorage("datasetId", "enrichments");
+
+	new Vue({
+		el: "#wrap",
+		data: {
+			datasetId:null
+		},
+		// if there is a dataset id, than this is for picking and applying an erichment
+	    created: async function () {
+    		this.orgId = sessionStorage.getItem("orgId");
+    		this.orgName = sessionStorage.getItem( "orgName"); 
+    	},
+    	mounted: function() {
+			this.datasetId=panelUrlParam( this.$el, "datasetId" ) 
+			console.log( this.datasetId )
+    	},
+    	methods: {
+	    },
+  	});
+  
+ </script>
+
+<div id="wrap">
+	<list-enrichments-component :org-id="orgId" :dataset-id="datasetId" />
+</div>

@@ -1,0 +1,42 @@
+{
+	"/download": {
+		"get": {
+			"tags": [
+				"Values"
+			],
+			"security": [
+				{
+					"SessionCookie": []
+				}
+			],
+			"summary": "Get a csvfile for given xpathHolder id. It lists all the values and their counts for this xpath inside a dataset",
+			"parameters": [
+				{
+					"name": "xpathHolder",
+					"in": "query",
+					"description": "Id of xpathHolder",
+					"required": true,
+					"schema": {
+						"type": "integer"
+					}
+				}
+			],
+			"operationId": "RequestHandler/downloadGet()",
+			"responses": {
+				"200": {
+					"description": "Successful operation",
+					"content": {
+						"application/gzip": {
+							"schema": {
+								"description":"A gzip csv file of the values and their counts"
+							}
+						}
+					}
+				},
+				"400": {
+					"$ref": "#/components/responses/error"
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,306 @@
+<script>
+  getValueAndStoreToSessionStorage("uploadId", "translation_apply");
+  new Vue({
+    el: "#translation-apply-page",
+    data() {
+      return {
+        uploadId: null,
+        literals: [],
+        dataset_details: {},
+        translationId: 0,
+        translations: [],
+        show: true,
+        selectedTranslationId: '',
+        selectedTranslation: {},
+      };
+    },
+    created: async function () {
+      this.uploadId = sessionStorage.getItem("uploadId");
+    },
+    mounted: async function() {
+      await this.getDatasetDetails();
+      await this.getTranslationList();
+    },
+    watch: {
+      selectedTranslationId: function(current, previous) {
+        if (current != ''){
+          this.selectedTranslation = this.translations.find(translation => translation.translationId == current);
+          if (this.selectedTranslation.defaultLanguage) {
+            this.selectedTranslation.normalizedTags = [{
+              "normalizedLabel": this.selectedTranslation.defaultLanguage
+            }]
+          }
+          this.selectedTranslation.normalizedTags.map(tag => {
+            tag.exclude = false;
+            tag.threshold = 0;
+            tag.fields = this.selectedTranslation.fieldNames.map(field => {
+              return {"field": field}
+            });
+            tag.fields.map(field => {
+              field.exclude = false;
+              field.threshold = 0;
+            })
+          })
+          this.selectedTranslation.normalizedTags.map(tag => {
+            tag.exclude = false;
+            tag.threshold = 0;
+          })
+        }
+        else {
+          this.selectedTranslation = {};
+        }
+      },
+    },
+    methods: {
+      getDatasetDetails: async function () {
+				await $.ajax({
+					url: "api/datasetDetails/" + this.uploadId,
+					type: "GET",
+					context: this,
+					error: function () {
+						alert("Error while getting options for Dataset #" + this.uploadId);
+					},
+					success: function (response) {
+						this.dataset_details = response;
+					}
+				});
+			},
+      getTranslationList: async function () {
+				await $.ajax({
+					url: "api/translation/list?datasetId=" + this.uploadId,
+					type: "GET",
+					context: this,
+					error: function () {
+						alert("Error while getting list of translations #" + this.uploadId);
+					},
+					success: function (response) {
+						this.translations = response;
+            if(this.translations.length == 1) {
+              this.selectedTranslationId = this.translations[0].translationId;
+            }
+					}
+				});
+			},
+      applyTranslation: function () {
+        let body = {};
+        this.selectedTranslation.normalizedTags.map(tag => {
+          if(tag.exclude){
+            body[tag.normalizedLabel] = {"exclude": true}
+          }
+          else{
+            body[tag.normalizedLabel] = {"threshold": (tag.threshold/100.0)};
+            let fieldBody = {};
+            tag.fields.map(field => {
+              if(field.exclude){
+                fieldBody[field.field] =  {
+                    "exclude": true
+                  }
+                }
+              else fieldBody[field.field] = {
+                  "threshold": (field.threshold/100.0)
+                }
+            })
+            body[tag.normalizedLabel].fields = fieldBody;
+          }
+
+        })
+        console.log(body)
+       
+       $.ajax({
+         url: "api/translation/apply?translationId=" + this.selectedTranslationId + "&datasetId=" + this.uploadId,
+         type: "POST",
+         data: JSON.stringify(body),
+         contentType: "application/json; charset=utf-8",
+         context: this,
+         error: function (resp) {
+           alert("Error during translation application start \n" + resp.err );
+         },
+         success: function () {
+           this.closeTab();
+         }
+       });
+
+      },
+      hideFields: function() {
+        // hack because it does not get the change from the exclude immediately
+        this.show = false;
+        this.show = true;
+      },
+      getDropdownText: function(index) {
+        let date = this.translations[index].ended.slice(0, 16);
+        let tags = ', tags: ' + (this.translations[index].defaultLanguage ? this.translations[index].defaultLanguage : this.translations[index].normalizedTags.map(tag => tag.normalizedLabel).join(', '));
+        let fields = ', fields: ' + this.translations[index].fieldNames.join(', ');
+        return date + tags + fields;
+      },
+      closeTab: function() {
+      let thisPanel = $($(this.$el).closest('div[id^=kp]'))
+      let previousPanelId = 'kp' + (thisPanel[0].id.at(-1) - 1);
+      let previousPanel = $('div[id^='+previousPanelId+']');
+      $K.kaiten('reload', previousPanel);
+      $K.kaiten('remove', thisPanel, false);
+    }
+    },
+  });
+</script>
+
+<div class="panel-body">
+  <div id="translation-apply-page" class="ui-widget block-nav">
+    <div class="panel-body">
+      <div id="translation-apply-page" class="ui-widget block-nav">
+        <div class="summary">
+          <button v-if="selectedTranslationId" class="back-button" @click="selectedTranslationId = ''">Back to translation selection</button>
+          <div class="label">
+            {{ dataset_details.name }} Apply Translation
+          </div>
+          <div class="info">
+            {{ !selectedTranslationId ? 'Select which translation you want to apply.': 'Select threshold for every language and field or exclude any combination that you do not want to be translated.' }}
+            <br></br>
+          </div>
+          <button v-if="selectedTranslationId" class="save-changes-button" @click="applyTranslation()" >Apply Translation</button>
+          <button v-if="selectedTranslationId" class="close-button" @click="closeTab()">Close</button>
+        </div>
+
+        <select v-if="!selectedTranslationId" v-model="selectedTranslationId">
+          <option disabled selected value>Select a translation</option>
+          <option v-for="(translation, index) of translations" :key="translation.translationId" :value="translation.translationId">{{ getDropdownText(index) }}</option>
+        </select>
+
+        <div v-if="selectedTranslationId" class="wrap">
+          <div class="lang-wrap" v-for="lang of selectedTranslation.normalizedTags" :key="lang.normalizedLabel" :id="lang.normalizedLabel">
+            <div class="lang">
+              <p class="lang-label">
+                {{ lang.normalizedLabel }}
+              </p>
+              <div class="threshold">
+                <label>Threshold:</label> 
+                <input type="number" min="0" max="100" v-model="lang.threshold" :disabled="!show || lang.exclude">
+                <!-- <p>{{ lang.threshold }}%</p> -->
+              </div>
+              <div>
+                <input
+                  type="checkbox"
+                  id="exclude"
+                  name="exclude"
+                  v-model="lang.exclude"
+                  @change="hideFields()"
+                />
+                <label for="exclude">Exclude language</label>
+              </div>
+                          
+            </div>
+            <div v-if="show && !lang.exclude" class="fields" v-for="field of lang.fields" :key="field.field">
+              <div class="field-name">
+                <img src="images/buttons/next.png" alt="Reject" @click="goToNextPage()" title="Next Page">
+                <p>{{ field.field }}</p>
+              </div>
+              <div class="threshold">
+                <label>Threshold:</label> 
+                <input type="number" min="0" max="100" v-model="field.threshold" :disabled="!show || field.exclude">
+                <!-- <p>{{ field.threshold }}%</p> -->
+              </div>
+              <div>
+                <input
+                  type="checkbox"
+                  id="exclude"
+                  name="exclude"
+                  v-model="field.exclude"
+                  @change="hideFields()"
+                />
+                <label for="exclude">Exclude field</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+#translation-apply-page .summary {
+  position: relative;
+  padding-bottom: 25px;
+}
+#translation-apply-page .wrap {
+  padding: 20px 10px 10px;
+}
+#translation-apply-page .wrap .lang-wrap {
+  margin-bottom: 10px;
+  border-bottom: 1px solid silver;
+}
+#translation-apply-page .lang {
+  display:flex;
+  align-items: center;
+  gap: 10px;
+}
+#translation-apply-page .fields {
+  display:flex;
+  align-items: center;
+  gap: 10px;
+}
+#translation-apply-page .fields .field-name {
+  display: flex;
+  align-items: center;
+  width: 140px;
+  font-size: 15px;
+}
+#translation-apply-page .threshold {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+#translation-apply-page .lang .lang-label{
+  text-transform: uppercase;
+  font-size: 17px;
+  font-weight: 400;
+  width: 140px;
+  font-size: 15px;
+}
+
+#translation-apply-page img{
+  margin-right: 5px;
+}
+#translation-apply-page select {
+  font-size: 1em;
+  border: 1px solid #9fafbc;
+  cursor: pointer;
+  margin: 5px;
+  width: 150px;
+}
+#translation-apply-page select:focus {
+  font-size: 13px;
+}
+#translation-apply-page input[type=number] {
+  width: 40px;
+  text-align: center;
+}
+#translation-apply-page input[type=checkbox] {
+  position: relative;
+  top:2px;
+}
+#translation-apply-page input:focus {
+  font-size: 13px;
+}
+.save-changes-button {
+  position: absolute;
+  right: 65px;
+  bottom: 10px;
+  background: #186ab9;
+  color: white;
+  padding: 3px 5px;
+  border: none;
+  border-radius: 3px;
+  font-size: 1.2em !important;
+}
+.close-button {
+  position: absolute;
+  right: 5px;
+  bottom: 10px;
+  background: #d3d8dd;
+  color: rgb(8, 8, 8);
+  padding: 3px 5px;
+  border: none;
+  border-radius: 3px;
+  font-size: 1.2em !important;
+}
+</style>

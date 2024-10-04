@@ -1,0 +1,164 @@
+<script>
+getValueAndStoreToSessionStorage("orgId", "enrichment_import");
+new Vue({
+    el: "#enrichmentImport",
+    data: function() {
+    	return {
+    		method:"url",
+    		filename: null,
+    		url:"",
+    		orgId: 0,
+    		orgName:"",
+    		type:"CSV",
+    		name:null,
+    		nameOverride:false,
+    		fileUploader:null
+    	}
+    },
+    // props:["select"],
+    created: async function () {
+    	this.orgId = sessionStorage.getItem("orgId");
+    	this.orgName = sessionStorage.getItem( "org#"+this.orgId );   	
+    },
+    mounted: function() {
+    	this.createUploader();
+    },
+    methods: {
+        createUploader: function() {
+        	let self = this;
+        	self.fileUploader = new qq.FileUploader({
+                element: document.getElementById('uploadFile'),
+                action: 'api/annotation/upload',
+                debug: true,
+                onSubmit: (id, filename)=>{
+                	let params = {};
+                	params["orgId"] = self.orgId;
+                	params["enrichmentType"] = self.type;
+                	if( self.nameOverride ) 
+                		params["name"] = self.name;
+                	else
+                		params["name"] = filename;
+                	
+                	console.log( params );
+                	self.fileUploader.setParams( params );
+                	return true;
+                }
+            });
+        },
+    
+    	postLink: async function() {
+    		let self = this;
+    		let data = { "url":self.url,
+    				"orgId": self.orgId };
+    		
+    		if( self.nameOverride )  
+    			data["name"] = self.name;
+    		
+ 	       	$.ajax({
+ 		         url: "api/annotation/uploadByUrl",
+ 		         data: $.param( data ),
+ 		         type: "POST",
+ 		         error: function (resp) {
+ 		           alert("Cant upload Link \n" + resp.err );
+ 		           self.closeTab();
+ 		         },
+ 		         success: function (resp) {
+ 		        	console.log( resp );
+					self.closeTab();	
+ 		         }
+ 		       });
+    	},
+
+      closeTab: function() {
+	      let thisPanel = $($(this.$el).closest('div[id^=kp]'))
+	      let previousPanelId = 'kp' + (thisPanel[0].id.at(-1) - 1);
+	      let previousPanel = $('div[id^='+previousPanelId+']');
+	      $K.kaiten('reload', previousPanel);
+	      $K.kaiten('remove', thisPanel, false);
+	   }
+    },
+  });
+</script>
+
+
+<div id="enrichmentImport" class="block-nav">
+	<div class="summary">
+		<div class="label">Import for "{{orgName}}"</div>
+	</div>
+
+	<div class="importoptions">
+		<div class="fitem">
+			<input type="checkbox" id="name" v-model="nameOverride"/>
+			<label for="name" >Optional Name for Enrichment</label>
+			<input type="text" id="name" v-model="name" v-show="nameOverride"/>			  
+		</div>
+		<div class="fitem fileupload">
+			<input type="radio" v-model="method" value="file" id="mth1"/>
+			 <label for="mth1">Local file upload</label> 
+			 <div v-show="method=='file'" >
+				<div class="fileoptions">
+					<input type="radio" v-model="type" value="JSON" id="typeJson" /> 
+					<label for="typeJson">JSON</label>
+					<input type="radio" v-model="type" value="CSV" id="typeCsv" />
+					<label for="typeCsv">CSV</label>
+				</div>
+					<div id="uploadFile" >
+						<noscript>
+							<p>Please enable JavaScript to use file uploader.</p>
+						</noscript>
+					</div>
+			</div>
+		</div>
+		<div class="fitem urlupload">
+			<input type="radio" v-model="method" value="url" id="mth2" /> 
+			 <label for="mth2">Upload via URL</label>
+			 <div v-show="method=='url'">
+				<input type="text" id="urlField" v-model="url" />
+				<button @click="postLink()"> Send </button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+.importoptions label {
+	margin-left: 20px;
+}
+
+.importoptions input[type='text']{
+	font-size:16px;
+	margin-left:7px;
+	margin-top:3px;
+	margin-bottom:2px;
+}
+
+.fitem {
+		background-image:linear-gradient( #e7efff, #D3E0FA );	
+	    line-height: 15px;
+	    position: relative;
+	    width: 98%;
+	    border-radius: 5px 5px 5px 5px; 
+	    margin-bottom:4px;
+	    padding: 5px 5px 5px 5px;
+}
+.importoptions {
+	display: flex;
+	flex-direction: column;
+	
+}
+.fileoptions {
+	display:flex;
+	justify-content:space-around;
+	width:50%;
+}
+.qq-upload-button {
+	margin-top:0px;
+	margin-left:10px;
+}
+
+.fileupload > div {
+	display:flex;
+	flex-direction: column;
+}
+</style>
+
