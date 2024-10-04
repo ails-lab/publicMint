@@ -1,4 +1,4 @@
-This is a Mint version cleaned of private information as a best effort.
+This is a Mint version cleaned of private information.
 
 It will not work without some database connection which needs to be set up.
 
