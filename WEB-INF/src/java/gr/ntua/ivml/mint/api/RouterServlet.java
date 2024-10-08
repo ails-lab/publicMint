@@ -54,17 +54,6 @@ public class RouterServlet extends HttpServlet {
 	
 	static {
 		// add the request handlers from projects here
-		projectHandlers.put( "fashion", gr.ntua.ivml.mint.projects.fashion.RequestHandler.class );
-		projectHandlers.put( "museu", gr.ntua.ivml.mint.projects.museu.RequestHandler.class );
-		projectHandlers.put( "modemuze", gr.ntua.ivml.mint.projects.modemuze.RequestHandler.class );
-		projectHandlers.put( "photo", gr.ntua.ivml.mint.projects.photo.RequestHandler.class );
-		projectHandlers.put( "photoxx", gr.ntua.ivml.mint.projects.photoxx.RequestHandler.class );
-		projectHandlers.put( "efgxx", gr.ntua.ivml.mint.projects.efgxx.RequestHandler.class );
-		projectHandlers.put( "euscreen", gr.ntua.ivml.mint.projects.euscreen.RequestHandler.class );
-		projectHandlers.put( "fashionxx", gr.ntua.ivml.mint.projects.fashionxx.RequestHandler.class );
-		projectHandlers.put( "direct", gr.ntua.ivml.mint.projects.direct.RequestHandler.class );
-		projectHandlers.put("carare", gr.ntua.ivml.mint.projects.carare.RequestHandler.class);
-		projectHandlers.put("sounds", gr.ntua.ivml.mint.projects.sounds.RequestHandler.class);
 
 		// install a hashmap of handlers from api.handlers directory
 		overrideHandlers.putAll( Setup.handlers());	

@@ -81,18 +81,7 @@ public class RequestHandler {
 	public static JsonNodeFactory json = JsonNodeFactory.instance;
 
 	public static List<GetOptions> optionsHandlers = Arrays.<GetOptions>asList( 
-			gr.ntua.ivml.mint.projects.fashion.DatasetOptions::options 
-			, gr.ntua.ivml.mint.projects.museu.DatasetOptions::options 
-			, gr.ntua.ivml.mint.projects.modemuze.RequestHandler::datasetPublishOptions
-			, gr.ntua.ivml.mint.projects.photo.RequestHandler::datasetPublishOptions
-			, gr.ntua.ivml.mint.projects.photoxx.RequestHandler::datasetPublishOptions
-			, gr.ntua.ivml.mint.projects.efgxx.RequestHandler::datasetPublishOptions
-			, gr.ntua.ivml.mint.projects.euscreen.RequestHandler::datasetPublishOptions
-			, gr.ntua.ivml.mint.projects.fashionxx.RequestHandler::datasetPublishOptions
-			, gr.ntua.ivml.mint.projects.direct.RequestHandler::datasetPublishOptions
-			, gr.ntua.ivml.mint.projects.carare.DatasetOptions::datasetPublishOptions
-			, gr.ntua.ivml.mint.projects.sounds.RequestHandler::datasetPublishOptions
-			, gr.ntua.ivml.mint.api.DatasetOptions::coreDatasetOptions);
+			gr.ntua.ivml.mint.api.DatasetOptions::coreDatasetOptions);
 	
 	public static int getPathInt( HttpServletRequest request, int pos ) throws Exception  {
 		String[] query = request.getPathInfo().split( "/");
